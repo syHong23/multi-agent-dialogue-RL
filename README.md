@@ -9,7 +9,6 @@ This project implements cooperative Multi-Agent Reinforcement Learning (MARL) fo
 
 이 프로젝트는 **대화 그라운딩(Dialogue Grounding)**의 핵심 문제인 참조 소통 태스크(referential communication task)를 협력적 다중 에이전트 강화학습(MARL)으로 구현합니다.
 
-Inspired by the research direction of the Orange Labs PhD position *"Multi-Agent Reinforcement Learning for Dialogue Grounding, Reasoning and Planning"* (2026-51532).
 
 ---
 
@@ -173,19 +172,6 @@ Agents converge in ~100 batches (6,400 episodes), learning a stable emergent com
 pip install torch numpy matplotlib
 python train.py
 ```
-
----
-
-## Connection to Orange Labs PhD Research | Orange Labs 박사 연구와의 연결
-
-This project directly addresses core challenges from the Orange Labs PhD thesis topic:
-
-| PhD Challenge | This Project |
-|--------------|-------------|
-| Task decomposition into grounding/reasoning/planning | Grounding modeled as a standalone MARL sub-task |
-| Designing effective reward functions | Sparse shared reward with normalization |
-| Going beyond prompting/RAG/fine-tuning | Agents learn from scratch via RL |
-| Small LM regime | Lightweight MLP policies as small LM proxies |
 
 ---
 
