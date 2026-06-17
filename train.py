@@ -1,7 +1,7 @@
 """
 Training Loop — Batched REINFORCE
 ===================================
-Batch updates (32 episodes per update) for stable multi-agent training.
+Batch updates (64 episodes per update) for stable multi-agent training.
 """
 
 import numpy as np
@@ -32,7 +32,7 @@ class DialogueGroundingEnv:
 # ── Policy Networks ───────────────────────────────────────────────────────────
 
 class SpeakerPolicy(nn.Module):
-    """Speaker: sees target index → produces discrete message token."""
+    """Speaker: sees target index -> produces discrete message token."""
     def __init__(self, num_candidates, vocab_size, hidden=64):
         super().__init__()
         self.embed = nn.Embedding(num_candidates, hidden)
@@ -47,7 +47,7 @@ class SpeakerPolicy(nn.Module):
 
 
 class ListenerPolicy(nn.Module):
-    """Listener: sees message token → selects candidate."""
+    """Listener: sees message token -> selects candidate."""
     def __init__(self, vocab_size, num_candidates, hidden=64):
         super().__init__()
         self.embed = nn.Embedding(vocab_size, hidden)
@@ -63,7 +63,7 @@ class ListenerPolicy(nn.Module):
 
 # ── Training ──────────────────────────────────────────────────────────────────
 
-def train(num_episodes=10000, batch_size=64, lr=3e-3,
+def train(num_episodes=50000, batch_size=64, lr=3e-3,
           num_candidates=4, vocab_size=8, seed=42):
 
     torch.manual_seed(seed)
@@ -79,8 +79,9 @@ def train(num_episodes=10000, batch_size=64, lr=3e-3,
     reward_history = []
     num_batches = num_episodes // batch_size
 
-    print("Multi-Agent Dialogue Grounding — Batched REINFORCE")
+    print("Multi-Agent Dialogue Grounding - Batched REINFORCE")
     print(f"Candidates: {num_candidates} | Vocab: {vocab_size} | Batch: {batch_size}")
+    print(f"Total batches: {num_batches}")
     print(f"Random baseline: {1/num_candidates:.0%}\n")
 
     for batch_idx in range(num_batches):
@@ -117,12 +118,11 @@ def train(num_episodes=10000, batch_size=64, lr=3e-3,
         opt_s.step()
         opt_l.step()
 
-        if (batch_idx + 1) % 50 == 0:
-            recent = np.mean(reward_history[-50:])
-            print(f"Batch {batch_idx+1:4d}/{num_batches} | "
-                  f"Accuracy: {recent:.2%}")
+        if (batch_idx + 1) % 100 == 0:
+            recent = np.mean(reward_history[-100:])
+            print(f"Batch {batch_idx+1:4d}/{num_batches} | Accuracy: {recent:.2%}")
 
-    final_acc = np.mean(reward_history[-50:])
+    final_acc = np.mean(reward_history[-100:])
     print(f"\nFinal accuracy: {final_acc:.2%} "
           f"(random baseline: {1/num_candidates:.0%})")
 
@@ -131,16 +131,23 @@ def train(num_episodes=10000, batch_size=64, lr=3e-3,
 
 
 def plot_results(history, num_candidates):
-    window = 20
+    window = 50
     smoothed = [np.mean(history[max(0, i-window):i+1]) for i in range(len(history))]
-    plt.figure(figsize=(10, 4))
-    plt.plot(smoothed, color="steelblue", label=f"Rolling accuracy (w={window})")
-    plt.axhline(1/num_candidates, color="red", linestyle="--",
+
+    plt.figure(figsize=(10, 5))
+    plt.plot(smoothed, color="steelblue", linewidth=2,
+             label=f"Rolling accuracy (window={window})")
+    plt.axhline(1/num_candidates, color="red", linestyle="--", linewidth=1.5,
                 label=f"Random baseline ({1/num_candidates:.0%})")
-    plt.xlabel("Batch")
-    plt.ylabel("Accuracy")
-    plt.title("Multi-Agent Dialogue Grounding — REINFORCE Training")
-    plt.legend()
+    plt.axhline(1.0, color="green", linestyle=":", linewidth=1.5,
+                label="Perfect accuracy (100%)")
+    plt.xlabel("Batch", fontsize=12)
+    plt.ylabel("Accuracy", fontsize=12)
+    plt.ylim(0, 1.05)
+    plt.title("Multi-Agent Dialogue Grounding\nREINFORCE Training — Emergent Communication",
+              fontsize=13, fontweight="bold")
+    plt.legend(fontsize=11)
+    plt.grid(True, alpha=0.3)
     plt.tight_layout()
     plt.savefig("training_curve.png", dpi=150)
     print("Saved training_curve.png")
